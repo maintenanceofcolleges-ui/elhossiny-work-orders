@@ -488,10 +488,21 @@ let USERS = [];
 let TECH_PROFILES = {};
 let CURRENT_USER = null;
 
+function cleanOrders(list){
+  const seen = new Set();
+  return (list || []).filter(o => {
+    if (!o) return false;
+    if (!String(o.desc||'').trim() || !String(o.mainLoc||'').trim()) return false; // صف فاضي
+    if (seen.has(o.id)) return false; // مكرر
+    seen.add(o.id);
+    return true;
+  });
+}
+
 async function initData(){
   const all = await apiGet('all');
   if(all.error) throw new Error(all.error);
-  ORDERS = all.orders || [];
+  ORDERS = cleanOrders(all.orders);
   USERS = all.users || [];
   TECH_PROFILES = all.profiles || {};
 }
@@ -614,7 +625,7 @@ async function bootFlow(){
   const usedCache = !!cache;
 
   if(usedCache){
-    ORDERS = cache.orders || [];
+   ORDERS = cleanOrders(cache.orders);
     USERS = cache.users || [];
     TECH_PROFILES = cache.profiles || {};
     document.getElementById('loadingScreen').style.display = 'none';
