@@ -490,13 +490,24 @@ let CURRENT_USER = null;
 
 function cleanOrders(list){
   const seen = new Set();
-  return (list || []).filter(o => {
+  const removed = [];
+  const kept = (list || []).filter(o => {
     if (!o) return false;
-    if (!String(o.desc||'').trim() || !String(o.mainLoc||'').trim()) return false; // صف فاضي
-    if (seen.has(o.id)) return false; // مكرر
-    seen.add(o.id);
+    // نشيل الصف بس لو كل بياناته المهمة فاضية
+    const empty = !String(o.desc||'').trim()
+               && !String(o.mainLoc||'').trim()
+               && !String(o.date||'').trim()
+               && !String(o.woNumber||'').trim();
+    if (empty) { removed.push({why:'فاضي', o}); return false; }
+    // نشيل المكرر بس لو الـ id موجود ومتكرر
+    if (o.id !== '' && o.id != null) {
+      if (seen.has(o.id)) { removed.push({why:'id مكرر', o}); return false; }
+      seen.add(o.id);
+    }
     return true;
   });
+  console.log('تم استبعاد', removed.length, 'صف:', removed);
+  return kept;
 }
 
 async function initData(){
