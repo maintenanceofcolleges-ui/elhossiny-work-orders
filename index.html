@@ -493,20 +493,18 @@ function cleanOrders(list){
   const removed = [];
   const kept = (list || []).filter(o => {
     if (!o) return false;
-    // نشيل الصف بس لو كل بياناته المهمة فاضية
-    const empty = !String(o.desc||'').trim()
-               && !String(o.mainLoc||'').trim()
-               && !String(o.date||'').trim()
-               && !String(o.woNumber||'').trim();
-    if (empty) { removed.push({why:'فاضي', o}); return false; }
-    // نشيل المكرر بس لو الـ id موجود ومتكرر
-    if (o.id !== '' && o.id != null) {
-      if (seen.has(o.id)) { removed.push({why:'id مكرر', o}); return false; }
-      seen.add(o.id);
-    }
+    const key = [o.date,o.category,o.desc,o.mainLoc,o.subLoc,o.building,o.room,o.engineer,o.tech,o.part,o.partCount,o.woNumber]
+                .map(v => String(v ?? '').trim()).join('|');
+    // صف فاضي تمامًا
+    if (key.replace(/\|/g,'') === '') { removed.push({why:'فاضي', o}); return false; }
+    // صف مطابق تمامًا لصف قبله (ومعاه نفس الـ id)
+    const full = o.id + '||' + key;
+    if (seen.has(full)) { removed.push({why:'مكرر تمامًا', o}); return false; }
+    seen.add(full);
     return true;
   });
-  console.log('تم استبعاد', removed.length, 'صف:', removed);
+  console.log('تم استبعاد', removed.length, 'صف');
+  console.table(removed.map(r => ({سبب:r.why, id:r.o && r.o.id, وصف:r.o && r.o.desc, رقم:r.o && r.o.woNumber})));
   return kept;
 }
 
